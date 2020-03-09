@@ -3,6 +3,7 @@ package util
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"gopkg.in/go-playground/validator.v10"
@@ -49,8 +50,7 @@ func DieIf(err error) {
 
 func Validate(w http.ResponseWriter, v interface{}) error {
 	validate := validator.New()
-	err := validate.Struct(v)
-	if err != nil {
+	if err := validate.Struct(v); err != nil {
 		validationError := make(map[string]string)
 		for _, e := range err.(validator.ValidationErrors) {
 			validationError[e.Field()] = e.ActualTag()
@@ -64,18 +64,16 @@ func Validate(w http.ResponseWriter, v interface{}) error {
 }
 
 func VerifyAndDecode(w http.ResponseWriter, request *http.Request, v interface{}) error {
-	err := json.NewDecoder(request.Body).Decode(v)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		err = json.NewEncoder(w).Encode(Response{Message: "ERROR Decode"})
-		return err
+	if err := json.NewDecoder(request.Body).Decode(v); err != nil {
+		return errors.New("ERROR Decode")
 	}
-	err = Validate(w, v)
+
+	err := Validate(w, v)
 
 	return err
 }
 
 type Response struct {
-	Message string `json:"message"`
-	Data interface{} `json:"data"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
 }
