@@ -1,0 +1,6 @@
+[psql]
+dbname = "golangdb"
+user = "user"
+pass = "user"
+host = "localhost"
+sslmode="disable"
