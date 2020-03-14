@@ -76,4 +76,5 @@ func VerifyAndDecode(w http.ResponseWriter, request *http.Request, v interface{}
 type Response struct {
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
+	Error   interface{} `json:"error,omitempty"`
 }

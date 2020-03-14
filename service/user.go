@@ -7,6 +7,7 @@ import (
 	"github.com/yuzuriha/restapi/models"
 	"github.com/yuzuriha/restapi/util"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -75,4 +76,72 @@ func UpdateUser(w http.ResponseWriter, request *http.Request) {
 	}
 
 	_ = json.NewEncoder(w).Encode(util.Response{Message: "Update Success", Data: user})
+}
+
+func DeleteUser(w http.ResponseWriter, request *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	userIds, ok := request.URL.Query()["id"]
+
+	if !ok || len(userIds[0]) < 1 {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(util.Response{Message: "User Does not Exists"})
+		return
+	}
+
+	userId, parseErr := strconv.ParseInt(userIds[0], 10, 0)
+
+	if parseErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(util.Response{Message: "Id is not available"})
+		return
+	}
+
+	user, userError := models.FindUser(context.Background(), util.GetDatabase(), int(userId))
+
+	if userError != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(util.Response{Message: "User Does not Exists"})
+		return
+	}
+
+	_, err := user.Delete(context.Background(), util.GetDatabase())
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(util.Response{Message: "Fail to Delete user"})
+		return
+	}
+
+	_ = json.NewEncoder(w).Encode(util.Response{Message: "Delete user success"})
+}
+
+func FindUser(w http.ResponseWriter, request *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	userIds, ok := request.URL.Query()["id"]
+
+	if !ok || len(userIds[0]) < 1 {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(util.Response{Message: "User Does not Exists"})
+		return
+	}
+
+	userId, err := strconv.ParseInt(userIds[0], 10, 0)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(util.Response{Message: "Id is not available"})
+		return
+	}
+
+	user, userError := models.FindUser(context.Background(), util.GetDatabase(), int(userId))
+
+	if userError != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(util.Response{Message: "User Does not Exists"})
+		return
+	}
+
+	_ = json.NewEncoder(w).Encode(util.Response{Message: "Fetching user success", Data: user})
 }
